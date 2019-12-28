@@ -6,6 +6,7 @@ import zhCN from 'antd/es/locale/zh_CN';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 import 'antd/dist/antd.css';
+import { makeStyles } from '@material-ui/styles';
 import { BookGallery } from './component'
 import { useMockableJsonFetch } from './hook'
 import Debugger from './Debugger'
@@ -15,9 +16,32 @@ useMockableJsonFetch.enableMock = true
 
 const AppContext = React.createContext();
 
+const useStyles = makeStyles({
+  RootLayout: {
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  Header: {
+    userSelect: 'none',
+    display: 'flex',
+    alignItems: 'center',
+    '&>h1': {
+      color: 'white',
+      fontWeight: 'normal',
+      fontSize: '1.2rem',
+      marginBottom: '0',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
+      flexGrow: 1
+    }
+  }
+})
+
 function App() {
   const [account, setAccount] = useState(null)
   const [title, setTitle] = useState()
+
   useEffect(() => {
     (async () => {
       const response = await fetch('/config.json')
@@ -27,37 +51,20 @@ function App() {
     })()
   }, [])
 
+  const styles = useStyles()
+
   return <AntdConfigProvider locale={zhCN}>
     <AppContext.Provider value={{
       account,
       setAccount,
       title
     }}>
-      <Layout style={{
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <Layout.Header
-          style={{
-            userSelect: 'none',
-            display: 'flex',
-            alignItems:
-              'center'
-          }}>
+      <Layout className={styles.RootLayout}>
+        <Layout.Header className={styles.Header}>
           {title ?
-            <Typography.Title level={1} style={{
-              color: 'white',
-              fontWeight: 'normal',
-              fontSize: '1.2rem',
-              marginBottom: '0',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              flexGrow: 1
-            }}>{title}</Typography.Title> :
-            <div style={{ flexGrow: 1 }} />}
-
-
+            <Typography.Title level={1}>{title}</Typography.Title>
+            : <div style={{ flexGrow: 1 }} />
+          }
         </Layout.Header>
         <div style={{
           flexGrow: 1,

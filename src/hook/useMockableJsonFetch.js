@@ -71,16 +71,20 @@ function useMockableJsonFetch(name, param, defaultData = null, mock = null) {
 				key,
 				placement,
 				btn:
-					<Button.Group>
-						<Button type="primary" size="small" onClick={() => {
-							notification.close(key)
-							dispatch(new SuccessResult(mock))
-						}}>通过</Button>
-						<Button type="danger" size="small" onClick={() => {
-							notification.close(key)
-							dispatch(new FailureResult(defaultData))
-						}}>拦截</Button>
-					</Button.Group>,
+					<>
+						<Button style={{ marginRight: '1rem' }}
+							type="primary" size="small" onClick={() => {
+								notification.close(key)
+								dispatch(new SuccessResult(mock))
+							}}>
+							通过</Button>
+						<Button
+							type="danger" size="small" onClick={() => {
+								notification.close(key)
+								dispatch(new FailureResult(defaultData))
+							}}>
+							拦截</Button>
+					</>,
 				duration: 0,
 			})
 		} else {
