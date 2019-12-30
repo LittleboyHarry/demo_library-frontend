@@ -4,6 +4,8 @@ import BookInfoPage from './BookInfoPage'
 import SearchPage from './SearchPage'
 import LoginPage from './LoginPage'
 import MyselfPage from './MyselfPage'
+import BookRecordPage from './BookRecordPage'
+import BookModifyPage from './BookModifyPage'
 
 export const PageKeys = {
 	EXPLORE: 'explore',
@@ -12,6 +14,8 @@ export const PageKeys = {
 	SEARCH: 'search',
 	LOGIN: 'login',
 	MYSELF: 'myself',
+	RECORED_NEW: 'new',
+	MODIFY: 'modify',
 }
 export const PageMap = {
 	[PageKeys.EXPLORE]: {
@@ -37,5 +41,13 @@ export const PageMap = {
 	[PageKeys.MYSELF]: {
 		name: '关于我',
 		component: MyselfPage
+	},
+	[PageKeys.RECORED_NEW]:{
+		name: '新书录入',
+		component: BookRecordPage
+	},
+	[PageKeys.MODIFY]:{
+		name: '图书修改',
+		component: BookModifyPage
 	},
 }

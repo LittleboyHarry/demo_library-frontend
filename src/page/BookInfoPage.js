@@ -3,6 +3,8 @@ import { Descriptions, Badge, Result, Spin, Skeleton, Button, Icon, Popover, Row
 import { useMockableJsonFetch, useAppContext, useLoginState } from '../hook'
 import { getBookInfo } from '../MockData'
 import { makeStyles } from '@material-ui/styles'
+import { PageSegueEvent } from '../event'
+import { PageKeys } from './'
 
 const { Item } = Descriptions
 const ButtonGroup = Button.Group
@@ -15,13 +17,19 @@ const useStyles = makeStyles({
 	}
 })
 
-function ModifyBox({ pin = false, onTogglePin }) {
+function ModifyBox({ pin = false, onTogglePin, bookId, bookName }) {
+	const { dispatch } = useAppContext()
 	const styles = useStyles()
 	const modifyTools = <Row type="flex" justify="space-around" style={{ width: 256 }}>
-		<Button type="primary" icon="edit" >修改</Button>
+		<Button type="primary" icon="edit" onClick={() => {
+			dispatch(new PageSegueEvent({
+				target: PageKeys.MODIFY,
+				data: { bookId, bookName }
+			}))
+		}}>修改</Button>
 		<Popconfirm
 			title="这会永久删除图书信息"
-			onConfirm={()=>{
+			onConfirm={() => {
 				message.loading('向后台发送请求中..');
 			}}
 			okText="确定"
@@ -85,7 +93,8 @@ export default function BookInfoPage({ loseFocus }) {
 							<Divider />
 							<ModifyBox
 								pin={pinModifyBox}
-								onTogglePin={() => { setPinModifyBox(!pinModifyBox) }} />
+								onTogglePin={() => { setPinModifyBox(!pinModifyBox) }}
+								{...{ bookId, bookName: book.name }} />
 						</>}
 					</>
 					: <Result

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { useAsync, useDebounce, createBreakpoint } from 'react-use'
+import React, { useEffect } from 'react'
+import { useAsync, createBreakpoint } from 'react-use'
 import './App.css';
-import { ConfigProvider as AntdConfigProvider, Layout, Typography, Menu, Button, Input, Drawer, Spin, Affix } from 'antd';
+import { ConfigProvider as AntdConfigProvider, Layout, Typography, Menu, Button, Drawer, Spin, Affix, Popover } from 'antd';
 import zhCN from 'antd/es/locale/zh_CN';
 import moment from 'moment';
 import 'moment/locale/zh-cn';
@@ -13,13 +13,12 @@ import Debugger from './Debugger'
 import * as Config from './Config'
 import AppContext, { useAppState, navPageList } from './AppContext';
 import { PageSegueEvent, GoBackEvent, ConfigLoadedEvent, ResponsiveEvent, ShowDrawerEvent } from './event'
+import { SearchInput } from './component'
 
 //#region 初始化配置
 moment.locale('zh-cn');
 useMockableJsonFetch.enableMock = Config.enableMock
 //#endregion 初始化配置
-
-const searchDebounceTime = 300
 
 const useAppStyles = makeStyles({
   Header: {
@@ -45,14 +44,6 @@ const useAppStyles = makeStyles({
   UserButton: {
     margin: '0 1rem'
   },
-  SpinWrapper: {
-    position: 'fixed',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0
-    /* width: '100vw',
-     height: '100vh' */ }
 })
 
 //#region 引用的组件
@@ -64,6 +55,9 @@ function NavMenu({ inDrawer = false }) {
     style={{ lineHeight: '64px' }}
     selectedKeys={[`${pageKey}`]}
     onClick={({ key }) => {
+      if (inDrawer)
+        dispatch(new ShowDrawerEvent(false))
+
       dispatch(new PageSegueEvent({
         target: key
       }))
@@ -81,22 +75,9 @@ function NavMenu({ inDrawer = false }) {
 }
 
 function Header() {
-  const { title, user, compactedLayout, showDrawer, dispatch } = useAppContext()
-  const [searchInputedValue, setSearchInputedValue] = useState('')
+  const { title, user, compactedLayout, showDrawer, pageKey, dispatch } = useAppContext()
   const styles = useAppStyles()
   const hasLogin = Boolean(user)
-
-  useDebounce(
-    () => {
-      if (searchInputedValue)
-        dispatch(new PageSegueEvent({
-          target: PageKeys.SEARCH,
-          data: { value: searchInputedValue }
-        }))
-    },
-    searchDebounceTime,
-    [searchInputedValue]
-  );
 
   const onMyself = () => {
     dispatch(new PageSegueEvent({
@@ -107,6 +88,12 @@ function Header() {
   const onLogin = () => {
     dispatch(new PageSegueEvent({
       target: PageKeys.LOGIN
+    }))
+  }
+
+  const onRecordNewBook = () => {
+    dispatch(new PageSegueEvent({
+      target: PageKeys.RECORED_NEW
     }))
   }
 
@@ -131,20 +118,8 @@ function Header() {
           target: PageKeys.SEARCH,
           data: { value: '' }
         }))
-      }} />
-      : <Input.Search
-        placeholder="图书搜索"
-        style={{ width: '25vw', marginRight: '1rem' }}
-        value={searchInputedValue}
-        onChange={({ target: { value } }) => { setSearchInputedValue(value) }}
-        onSearch={value => {
-          setSearchInputedValue('')
-          dispatch(new PageSegueEvent({
-            target: PageKeys.SEARCH,
-            data: { value: searchInputedValue }
-          }))
-        }}
-        enterButton />}
+      }} {...pageKey === PageKeys.SEARCH && { style: { display: 'none' } }} />
+      : <SearchInput inHeader />}
     {!compactedLayout && <NavMenu />}
     {
       hasLogin
@@ -155,6 +130,10 @@ function Header() {
           ? <Button className={styles.UserButton} ghost shape="circle" icon="login" onClick={onLogin} />
           : <Button className={styles.UserButton} ghost shape="round" icon="login" onClick={onLogin}>管理员</Button>
     }
+    {!compactedLayout &&
+      <Popover placement="bottomRight" content="录入新书" mouseEnterDelay={1.2}>
+        <Button icon="plus" size="large" ghost onClick={onRecordNewBook} type="link" />
+      </Popover>}
     {
       compactedLayout
       && <Button
@@ -168,8 +147,17 @@ function Header() {
     <Drawer
       title="导航"
       visible={showDrawer}
-      bodyStyle={{ padding: 0 }}
+      bodyStyle={{
+        padding: 0,
+        display: 'flex',
+        alignItems: 'stretch',
+        flexDirection: 'column'
+      }}
       onClose={() => { dispatch(new ShowDrawerEvent(false)) }}>
+      <Button style={{ margin: 24 }} icon="plus" size="large" onClick={() => {
+        onRecordNewBook()
+        dispatch(new ShowDrawerEvent(false))
+      }} >录入新书</Button>
       <NavMenu inDrawer />
     </Drawer>
   </Layout.Header>
@@ -196,7 +184,7 @@ function ContentContainer({ currentPageKey, footer }) {
 }
 
 function GlobalSpin({ show }) {
-  const styles = useAppStyles()
+  // const styles = useAppStyles()
 
   return <Affix style={{
     position: 'fixed',
@@ -228,13 +216,13 @@ function App() {
   const appState = useAppState()
   const breakpoint = useBreakpoint()
 
+  const { dispatch, pageKey, globalWaiting, } = appState
+
   useEffect(() => {
     dispatch(new ResponsiveEvent({
       compacted: breakpoint === 'xs' || breakpoint === 'sm'
     }))
-  }, [breakpoint])
-
-  const { dispatch, pageKey, globalWaiting, } = appState
+  }, [dispatch, breakpoint])
 
   //#region 加载配置文件
   useAsync(async () => {

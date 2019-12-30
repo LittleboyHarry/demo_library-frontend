@@ -29,6 +29,7 @@ const defaultContext = {
 	browsingBookId: null,
 	searchingValue: '',
 	globalWaiting: false,
+	modifyingBookId: null,
 }
 const splitedPath = location.pathname.split('/');
 const keyInUrl = splitedPath[1]
@@ -39,7 +40,6 @@ if (defaultContext.pageKey === PageKeys.BOOK && possibleBookId)
 //#endregion AppContext 和初始化
 
 
-//#region 事件处理器和 reducer
 function changeStateByPageSegueEvent(state, event) {
 	switch (event.targetPageKey) {
 		case PageKeys.EXPLORE:
@@ -48,11 +48,11 @@ function changeStateByPageSegueEvent(state, event) {
 		case PageKeys.CATEGORY:
 			document.title = `${state.title} - 分类`
 			break;
-		case PageKeys.BOOK:
+		case PageKeys.BOOK: {
 			const { bookId, bookName } = event.data
 			state.browsingBookId = bookId
 			document.title = `《${bookName}》介绍`
-			break;
+		} break;
 		case PageKeys.SEARCH:
 			state.searchingValue = event.data.value
 			break;
@@ -62,6 +62,14 @@ function changeStateByPageSegueEvent(state, event) {
 		case PageKeys.MYSELF:
 			document.title = `登陆${state.title}`
 			break;
+		case PageKeys.RECORED_NEW:
+			document.title = `录入新书`
+			break;
+		case PageKeys.MODIFY: {
+			const { bookId, bookName } = event.data
+			state.modifyingBookId = bookId
+			document.title = `正在修改《${bookName}》`
+		} break;
 		default:
 			throw new Error('跳转到程序无法解析的页面')
 	}
@@ -93,6 +101,9 @@ const handlerMapper = {
 				history.pushState(event, null, `/${targetPageKey}/${bookId}`)
 				break;
 			case PageKeys.SEARCH:
+			case PageKeys.RECORED_NEW:
+			case PageKeys.MODIFY:
+				// 不计入历史记录
 				break;
 			default:
 				if (currentPageKey !== targetPageKey) {
@@ -126,7 +137,6 @@ function eventReducer(oldState, event) {
 	listener(newState, event)
 	return newState
 }
-//#endregion 事件处理器和 reducer
 
 export function useAppState() {
 	const [state, dispatch] = useReducer(eventReducer, defaultContext)
